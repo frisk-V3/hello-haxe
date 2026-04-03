@@ -16,17 +16,19 @@ jobs:
         run: haxelib install hxcpp
 
       - name: Build Static EXE
-        # -D ABI=-MT でランタイムを埋め込む（静的リンク）
+        # -cpp bin と指定すると、実は bin/Main.exe が出来上がります
         run: haxe -main Main -cpp bin -D static_link -D ABI=-MT
 
+      - name: Check files (Debug)
+        # 念のためファイルがどこにあるかログに出して確認
+        run: Get-ChildItem -Recurse bin
+
       - name: Run EXE
-        # WindowsのPowerShellではバックスラッシュ \ を使い、
-        # かつHaxeのデフォルト出力先である「bin/Main.exe」を指定
+        # これが Haxe (hxcpp) の標準的な出力パスです
         run: .\bin\Main.exe "GitHub-Actions"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: standalone-haxe-exe
-          # ここも実際のパスに合わせて修正
           path: bin/Main.exe
