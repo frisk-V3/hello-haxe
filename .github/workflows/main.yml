@@ -6,8 +6,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup Haxe
-        uses: kyoheiu/setup-haxe@v1.2.1
+        uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: 4.3.4
+
       - name: Run
-        # 直接コマンドを叩く！引数もここで渡す
-        run: haxe --main Main --interp -- "GitHub-User"
+        # Main.hx をインタープリタで実行し、引数に "GitHub-Actions" を渡す
+        run: haxe --main Main --interp -- "GitHub-Actions"
