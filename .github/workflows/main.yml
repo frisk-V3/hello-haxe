@@ -1,9 +1,9 @@
-name: Haxe CI
+name: Haxe EXE Build
 on: [push]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest # EXEを作るためにWindowsランナーを使用
     steps:
       - uses: actions/checkout@v4
 
@@ -12,6 +12,21 @@ jobs:
         with:
           haxe-version: 4.3.4
 
-      - name: Run
-        # Main.hx をインタープリタで実行し、引数に "GitHub-Actions" を渡す
-        run: haxe --main Main --interp -- "GitHub-Actions"
+      - name: Install hxcpp
+        # HaxeをC++に変換するために必要な公式ライブラリ
+        run: haxelib install hxcpp
+
+      - name: Build EXE
+        # --cpp で出力先フォルダを指定してコンパイル
+        run: haxe --main Main --cpp bin
+
+      - name: Run EXE
+        # 生成された本物の実行ファイルを叩く！
+        run: ./bin/Main.exe "GitHub-Actions"
+
+      - name: Upload Artifact
+        # 作成したEXEをGitHubからダウンロードできるように保存
+        uses: actions/upload-artifact@v4
+        with:
+          name: hello-haxe-exe
+          path: bin/Main.exe
