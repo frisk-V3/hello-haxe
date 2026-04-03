@@ -1,4 +1,4 @@
-name: Self-Healing Haxe Build
+name: Ultimate Haxe Build
 on: [push]
 
 jobs:
@@ -13,28 +13,30 @@ jobs:
       - name: Install hxcpp
         run: haxelib install hxcpp
 
-      - name: Build
-        run: haxe -main Main -cpp bin -D static_link -D ABI=-MT
+      - name: Build with Verbose
+        # -v をつけてコンパイルの全行程（エラー含む）を表示
+        # -D MSVC_RUNTIME=static で静的リンクをより確実に
+        run: haxe -main Main -cpp bin -D static_link -D ABI=-MT -v
 
-      - name: Find and Run EXE (Auto-detect)
+      - name: Force Find and Run
         shell: pwsh
         run: |
-          # binフォルダの中から .exe を自動で探し出す
-          $exePath = (Get-ChildItem -Path bin -Filter Main.exe -Recurse | Select-Object -First 1).FullName
-          if ($exePath) {
-              Write-Host "EXEを発見: $exePath"
-              # 見つけたパスで実行！
-              & $exePath "GitHub-Actions"
-              # 後続のステップ（Upload）のために環境変数に保存
-              echo "EXE_PATH=$exePath" >> $env:GITHUB_ENV
+          Write-Host "--- 全ファイルリスト確認 ---"
+          Get-ChildItem -Recurse
+          
+          $exe = Get-ChildItem -Filter "*.exe" -Recurse | Select-Object -First 1
+          if ($exe) {
+              Write-Host "発見したEXE: $($exe.FullName)"
+              & $exe.FullName "GitHub-Actions"
+              echo "EXE_PATH=$($exe.FullName)" >> $env:GITHUB_ENV
           } else {
-              Write-Error "EXEが見つかりませんでした"
+              Write-Error "EXEがこのリポジトリのどこにも存在しません！コンパイル失敗の可能性があります。"
               exit 1
           }
 
-      - name: Upload Artifact
+      - name: Upload
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: auto-detected-exe
+          name: fixed-exe
           path: ${{ env.EXE_PATH }}
