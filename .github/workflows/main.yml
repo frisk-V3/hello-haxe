@@ -1,9 +1,9 @@
-name: Haxe EXE Build
+name: Haxe Static EXE Build
 on: [push]
 
 jobs:
   build:
-    runs-on: windows-latest # EXEを作るためにWindowsランナーを使用
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -13,20 +13,18 @@ jobs:
           haxe-version: 4.3.4
 
       - name: Install hxcpp
-        # HaxeをC++に変換するために必要な公式ライブラリ
         run: haxelib install hxcpp
 
-      - name: Build EXE
-        # --cpp で出力先フォルダを指定してコンパイル
-        run: haxe --main Main --cpp bin
+      - name: Build Static EXE
+        # -D static_link: ライブラリを静的に結合
+        # -D ABI=-MT: MSVCに「ランタイム(VC++)をEXEに埋め込め」と指示
+        run: haxe -main Main -cpp bin -D static_link -D ABI=-MT
 
       - name: Run EXE
-        # 生成された本物の実行ファイルを叩く！
         run: ./bin/Main.exe "GitHub-Actions"
 
       - name: Upload Artifact
-        # 作成したEXEをGitHubからダウンロードできるように保存
         uses: actions/upload-artifact@v4
         with:
-          name: hello-haxe-exe
+          name: standalone-haxe-exe
           path: bin/Main.exe
