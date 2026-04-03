@@ -1,0 +1,13 @@
+name: Haxe CI
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Haxe
+        uses: kyoheiu/setup-haxe@v1.2.1
+      - name: Run
+        # 直接コマンドを叩く！引数もここで渡す
+        run: haxe --main Main --interp -- "GitHub-User"
