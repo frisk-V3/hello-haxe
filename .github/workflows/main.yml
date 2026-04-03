@@ -1,4 +1,4 @@
-name: Haxe Static EXE Build
+name: Self-Healing Haxe Build
 on: [push]
 
 jobs:
@@ -6,29 +6,35 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Haxe
-        uses: krdlab/setup-haxe@v1
+      - uses: krdlab/setup-haxe@v1
         with:
           haxe-version: 4.3.4
 
       - name: Install hxcpp
         run: haxelib install hxcpp
 
-      - name: Build Static EXE
-        # -cpp bin と指定すると、実は bin/Main.exe が出来上がります
+      - name: Build
         run: haxe -main Main -cpp bin -D static_link -D ABI=-MT
 
-      - name: Check files (Debug)
-        # 念のためファイルがどこにあるかログに出して確認
-        run: Get-ChildItem -Recurse bin
-
-      - name: Run EXE
-        # これが Haxe (hxcpp) の標準的な出力パスです
-        run: .\bin\Main.exe "GitHub-Actions"
+      - name: Find and Run EXE (Auto-detect)
+        shell: pwsh
+        run: |
+          # binフォルダの中から .exe を自動で探し出す
+          $exePath = (Get-ChildItem -Path bin -Filter Main.exe -Recurse | Select-Object -First 1).FullName
+          if ($exePath) {
+              Write-Host "EXEを発見: $exePath"
+              # 見つけたパスで実行！
+              & $exePath "GitHub-Actions"
+              # 後続のステップ（Upload）のために環境変数に保存
+              echo "EXE_PATH=$exePath" >> $env:GITHUB_ENV
+          } else {
+              Write-Error "EXEが見つかりませんでした"
+              exit 1
+          }
 
       - name: Upload Artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: standalone-haxe-exe
-          path: bin/Main.exe
+          name: auto-detected-exe
+          path: ${{ env.EXE_PATH }}
